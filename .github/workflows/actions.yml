@@ -27,7 +27,7 @@ jobs:
           # Fetch the list of repositories to build from a text file (Repositories.txt)
           while IFS= read -r repo; do
             git clone "$repo"
-          done < GithubRepositories/Repositories/Repositories.txt
+          done < github-repositories/repositories.txt
         shell: bash
 
       - name: Build Binaries 
@@ -66,10 +66,10 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          publish_dir: ./Github\ Pages/Documents/Index.md # Path to publish directory for GitHub Pages
+          publish_dir: ./github-pages/pages.md # Path to publish directory for GitHub Pages
 
       - name: Store Artifacts as Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./Github\ Release/Artifacts/Artifacts@v1.0.0 # Path to artifacts for GitHub Release
+          files: ./github-elease/artifacts@v1.0.0 # Path to artifacts for GitHub Release
