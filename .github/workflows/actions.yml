@@ -1,4 +1,4 @@
-name: Build and Deploy Repositories
+name: Build Binaries 
 
 on:
   workflow_dispatch:
@@ -21,14 +21,53 @@ jobs:
           sudo apt install -y bazel
           bazel version
         shell: bash
-          
-      - name: Fetch Repository List
+
+      - name: Run Go script to fetch repositories
         run: |
-          # Fetch the list of repositories to build from a text file (Repositories.txt)
-          while IFS= read -r repo; do
-            git clone "$repo"
-          done < github-repositories/repositories.txt
-        shell: bash
+          package main
+
+          import (
+            "bufio"
+            "fmt"
+            "os"
+            "os/exec"
+            "strings"
+          )
+
+          func main() {
+            // Open github-repositories/repositories.txt file
+            file, err := os.Open("github-repositories/repositories.txt")
+            if err != nil {
+              fmt.Println("Error opening file:", err)
+              os.Exit(1)
+            }
+            defer file.Close()
+
+            scanner := bufio.NewScanner(file)
+
+            // Iterate through each line of the file
+            for scanner.Scan() {
+              repositoryURL := strings.TrimSpace(scanner.Text()) // Trim spaces and newline characters
+
+              // Display or use the repository URL
+              fmt.Println("Repository URL:", repositoryURL)
+
+              // Git clone each URL to the working directory
+              cmd := exec.Command("git", "clone", repositoryURL)
+              cmd.Stdout = os.Stdout
+              cmd.Stderr = os.Stderr
+              err := cmd.Run()
+              if err != nil {
+                fmt.Println("Error cloning repository:", err)
+                // Handle the error or continue with the next URL
+              }
+            }
+
+            if err := scanner.Err(); err != nil {
+              fmt.Println("Error reading file:", err)
+              os.Exit(1)
+            }
+          }
 
       - name: Build Binaries 
         run: |
@@ -48,7 +87,7 @@ jobs:
             
             cd ..
             rm -rf "$repo_name"
-          done < GithubRepositories/Repositories/Repositories.txt
+          done < github-repositories/repositories.txt
         shell: bash
 
       - name: Bazel Test
@@ -72,4 +111,5 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./github-elease/artifacts@v1.0.0 # Path to artifacts for GitHub Release
+          files: ./github-release/artifacts@v1.0.0 # Path to artifacts for GitHub Release
+
